@@ -1,6 +1,6 @@
 # BUSY Codex
 
-Codex usage on a USB-connected BUSY Bar: a large remaining percentage, a centered local clock, time until the quota resets, and a continuous progress bar.
+Codex usage on a BUSY Bar connected over USB or Wi-Fi: a large remaining percentage, a centered local clock, time until the quota resets, and a continuous progress bar.
 
 ![BUSY Codex display](docs/display.png)
 
@@ -36,7 +36,25 @@ npm run setup -- --addr 10.0.4.20
 npm run setup -- --helper-only
 ```
 
-`--helper-only` installs just the background updater. The app must already be installed on the device. App settings are accessed over USB; this project does not configure Wi-Fi access.
+`--helper-only` installs just the background updater. The app must already be installed on the device.
+
+### Switch to Wi-Fi
+
+Connect the BUSY Bar to Wi-Fi and enable HTTP API access over Wi-Fi in its web interface. The updater currently supports API access with password protection off; authenticated Wi-Fi access is not implemented. Setup does not change those device settings.
+
+Once the device app is installed, point the Mac updater at the bar's Wi-Fi address:
+
+```sh
+npm run setup -- --helper-only --addr 192.168.1.50
+```
+
+Replace the example address with the bar's address shown in its network settings. The helper stores it locally; it is not committed to Git. USB is then unnecessary for updates. The Mac must still be awake and able to reach the bar on the local network. A DHCP reservation on your router prevents its address changing.
+
+To switch back to USB:
+
+```sh
+npm run setup -- --helper-only --addr 10.0.4.20
+```
 
 ## Remove
 
@@ -73,13 +91,13 @@ Codex sign-in on the Mac
     │ read-only account/rateLimits/read (Codex app-server)
     ▼
 Mac updater, every 60 seconds
-    │ tiny settings snapshot over USB HTTP
+    │ tiny settings snapshot over USB or Wi-Fi HTTP
     ▼
 BUSY Bar JavaScript app
     └─ percentage · clock · reset countdown · progress bar
 ```
 
-The Mac must be awake, signed in, and connected for live usage updates. Credentials stay with Codex on the Mac. The bar receives only remaining percentage, window duration, reset timestamp, and snapshot timestamp. It never receives an access token.
+The Mac must be awake, signed in, and able to reach the bar over USB or Wi-Fi for live usage updates. Credentials stay with Codex on the Mac. The bar receives only remaining percentage, window duration, reset timestamp, and snapshot timestamp. It never receives an access token.
 
 The updater writes immediately when usage changes, or every five minutes as a heartbeat. The bar checks its settings and local clock every 15 seconds, redrawing only when visible pixels change. Network errors leave the app running; stale data is labeled. No firmware modifications or inference/model calls are needed.
 
@@ -104,7 +122,7 @@ tail -n 30 ~/Library/Logs/BUSYCodex/sync.log
 
 For a one-off sync, `BUSY_BAR_ADDR` and `BUSY_CODEX_PATH` can override the address or executable. Generated configuration, caches, logs, and `.env` files are ignored by Git. No API key is needed.
 
-If usage is stale, check USB connectivity, Mac sleep, and Codex sign-in. If the executable path is missing, activate Node 24 and re-run setup. The companion uses macOS's built-in curl for device requests because native Node networking from LaunchAgents was unreliable on the original Mac.
+If usage is stale, check USB/Wi-Fi connectivity, Mac sleep, and Codex sign-in. If the executable path is missing, activate Node 24 and re-run setup. The companion uses macOS's built-in curl for device requests because native Node networking from LaunchAgents was unreliable on the original Mac.
 
 ## Development
 
